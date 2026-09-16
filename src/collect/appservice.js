@@ -35,8 +35,10 @@ async function collectApps(arm, { subscriptionId, resourceGroup }) {
       plan: planName(a.properties?.serverFarmId),
       runtime: a.properties?.siteConfig?.linuxFxVersion || null,
       httpsOnly: a.properties?.httpsOnly ?? null,
-      // siteConfig is not populated on list responses for every API version;
-      // null means "not reported here", not "disabled".
+      // Verified against api-version 2023-12-01: the ARM list response DOES
+      // populate siteConfig, unlike `az webapp list`, which returns it empty.
+      // Still optional-chained: a future version may drop it, and null must
+      // read as "not reported", never as "disabled".
       alwaysOn: a.properties?.siteConfig?.alwaysOn ?? null,
       url: a.properties?.defaultHostName ? `https://${a.properties.defaultHostName}` : null,
       location: a.location ?? null,

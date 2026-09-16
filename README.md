@@ -163,9 +163,10 @@ reachable over plain HTTP.
 npm test
 ```
 
-41 tests, no dependencies, no network. The suite covers the diff engine (including every
+47 tests, no dependencies, no network. The suite covers the diff engine (including every
 collector-status transition), token comparison, ARM error classification, the `expires_on`
-string-parsing trap, probe timeouts and self-exclusion, and configuration validation.
+string-parsing trap, probe timeouts and self-exclusion, independent settling of the governance
+sub-reads, and configuration validation.
 
 ## Limitations
 
