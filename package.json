@@ -1,0 +1,14 @@
+{
+  "name": "azure-sandbox-manager",
+  "version": "0.1.0",
+  "description": "Self-hosted dashboard and API that report the full state of an Azure resource group, including unannounced changes",
+  "license": "MIT",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "keywords": ["azure", "app-service", "managed-identity", "monitoring", "dashboard"]
+}

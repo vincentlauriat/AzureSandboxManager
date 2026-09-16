@@ -1,0 +1,21 @@
+# Local configuration — never commit real subscription or tenant identifiers
+.env
+.env.local
+
+# Runtime state
+snapshots/
+*.jsonl
+
+# Build artefacts
+release/
+*.zip
+node_modules/
+
+# Working notes (convention: these stay local)
+COMMANDS.md
+MEMORY.md
+CHANGES.md
+TODOS.md
+PLAN.md
+
+.DS_Store
