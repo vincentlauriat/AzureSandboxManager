@@ -144,6 +144,24 @@ showing really is. See [`docs/api.md`](docs/api.md) for payload shapes and a Swi
 curl -H "X-Sandbox-Token: $SANDBOX_TOKEN" https://<app>.azurewebsites.net/api/v1/snapshot
 ```
 
+## A client for it
+
+[**SandboxWatch**](https://github.com/vincentlauriat/sandboxwatch) is the Mac half of this
+project: `sbw`, a command-line client that keeps several sandboxes in one inventory, holds each
+token in the Keychain, and reports what changed since the last time you looked.
+
+It exists because the API alone still leaves you to run `curl` and read JSON. Two things it does
+that a `curl` pipeline will not:
+
+- **`sbw doctor`** tells apart the states that all look like a broken deployment — the app down,
+  the token refused, no collection completed yet, and a Reader role granted but not yet
+  propagated. That last one is the half-hour of wrong readings this project was written after.
+- **`sbw changes`** keeps a cursor per sandbox and detects the case where more events happened
+  than one page returns, rather than truncating in silence.
+
+A menu bar app with notifications, `az`-backed start/stop/restart, and a control center window
+are planned in that repository; only the CLI has shipped so far.
+
 ## Security model
 
 The shared token is deliberately simple, and its risk is bounded by the Reader role: someone holding
@@ -178,7 +196,8 @@ sub-reads, and configuration validation.
 - **Budget figures lag.** Billing data is not real time, and on reduced-rate subscriptions small spend
   can read as zero for a long while. Do not read `0` as proof of no cost.
 - **No notifications.** Changes are visible, not pushed. The append-only change log is the right base
-  to build alerting on.
+  to build alerting on — which is what [SandboxWatch](https://github.com/vincentlauriat/sandboxwatch)
+  is being built on, though its notifications are not shipped yet either.
 
 ## Licence
 
