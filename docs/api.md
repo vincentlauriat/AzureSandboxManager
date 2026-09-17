@@ -65,7 +65,8 @@ Applications and probe results only. Useful for a client that polls often and do
       "type": "collector_access_lost",
       "subject": "governance",
       "detail": { "status": "denied", "message": "AuthorizationFailed" },
-      "collector": "governance"
+      "collector": "governance",
+      "severity": "critical"
     }
   ]
 }
@@ -73,6 +74,21 @@ Applications and probe results only. Useful for a client that polls often and do
 
 Newest first. `?limit=` accepts 1–500 and defaults to 50; out-of-range values are clamped, not
 rejected.
+
+`severity` is one of `informational`, `notable`, `critical`. It is a function of `type`, derived when
+the event is read and **never stored** in the change log — so re-classifying a type later
+reclassifies the whole history with it, retroactively and with no data migration. A client that meets
+a value it does not know must treat it as `notable`: visible, but never loud enough to raise an alarm
+on its own.
+
+| Severity | Types |
+|---|---|
+| `critical` | `collector_access_lost`, `collector_access_restored` |
+| `notable` | `role_added`, `role_removed`, `lock_added`, `lock_removed`, `budget_threshold_crossed` |
+| `informational` | `resource_added`, `resource_removed`, `app_state_changed`, `plan_tier_changed`, `probe_status_changed` |
+
+The table lives in `src/vocabulary.js`, and the diff engine emits through its guard: a new type
+cannot reach the log without a severity.
 
 ### `POST /api/v1/refresh`
 

@@ -46,6 +46,10 @@ Change types: `resource_added`, `resource_removed`, `app_state_changed`, `plan_t
 `role_added`, `role_removed`, `lock_added`, `lock_removed`, `budget_threshold_crossed`,
 `probe_status_changed`, `collector_access_lost`, `collector_access_restored`.
 
+Each event also carries a `severity` — `informational`, `notable` or `critical`. Losing or regaining
+collector access is the critical pair: it is the incident this project was written after, and it must
+never queue behind a probe that flickered.
+
 ## The rule that makes change detection trustworthy
 
 Data is compared **only when both snapshots successfully collected that section**. A change of

@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const { renderPage, renderRoleHint } = require('./html');
+const { withSeverity } = require('./vocabulary');
 
 const REFRESH_COOLDOWN_MS = 30_000;
 
@@ -70,7 +71,7 @@ function createHandler({ config, store, log, runCollection, now = () => Date.now
         );
       }
       const snapshot = await store.latest();
-      const events = await log.read(20);
+      const events = withSeverity(await log.read(20));
       const html = renderPage({
         snapshot,
         events,
@@ -104,7 +105,7 @@ function createHandler({ config, store, log, runCollection, now = () => Date.now
     if (path === '/api/v1/changes' && req.method === 'GET') {
       const requested = Number.parseInt(url.searchParams.get('limit') ?? '50', 10);
       const limit = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), 500) : 50;
-      return json(res, 200, { limit, events: await log.read(limit) });
+      return json(res, 200, { limit, events: withSeverity(await log.read(limit)) });
     }
 
     if (path === '/api/v1/refresh' && req.method === 'POST') {

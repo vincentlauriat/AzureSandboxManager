@@ -13,6 +13,8 @@
  * the reason this tool exists.
  */
 
+const { assertKnownType } = require('./vocabulary');
+
 const COLLECTORS = ['resources', 'plans', 'apps', 'budget', 'governance', 'probes'];
 
 function statusOf(snapshot, collector) {
@@ -28,7 +30,7 @@ function byName(list) {
 }
 
 function event(type, subject, detail) {
-  return { type, subject, detail };
+  return { type: assertKnownType(type), subject, detail };
 }
 
 function diffResources(before, after) {
@@ -155,9 +157,10 @@ function diffSnapshots(before, after) {
 
     if (wasOk && !isOk) {
       events.push({
-        type: 'collector_access_lost',
-        subject: collector,
-        detail: { status: is, message: after?.[collector]?.message ?? null },
+        ...event('collector_access_lost', collector, {
+          status: is,
+          message: after?.[collector]?.message ?? null,
+        }),
         collector,
       });
       continue;
@@ -166,7 +169,7 @@ function diffSnapshots(before, after) {
     if (!wasOk && isOk) {
       // No data events: the gap against the pre-loss state is not attributable
       // to a real change.
-      events.push({ type: 'collector_access_restored', subject: collector, detail: { from: was }, collector });
+      events.push({ ...event('collector_access_restored', collector, { from: was }), collector });
     }
   }
 

@@ -34,23 +34,35 @@ function section(collector, title, renderOk) {
 
 function table(headers, rows) {
   if (!rows.length) return '<p class="empty">Nothing to show.</p>';
+  // A row is an array of cells, or { cells, className } when it needs marking.
+  const row = (r) => {
+    const cells = Array.isArray(r) ? r : r.cells;
+    const className = Array.isArray(r) || !r.className ? '' : ` class="${escape(r.className)}"`;
+    return `<tr${className}>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`;
+  };
   return `<div class="scroll"><table>
     <thead><tr>${headers.map((h) => `<th>${escape(h)}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    <tbody>${rows.map(row).join('')}</tbody>
   </table></div>`;
 }
+
+// Same markers as `sbw changes`, so both surfaces teach one vocabulary.
+const SEVERITY_MARKER = { critical: '!!', notable: '!', informational: '' };
 
 function renderPage({ snapshot, events, ageSeconds, roleHint }) {
   const banner = snapshot
     ? `Collected ${escape(snapshot.collectedAt)} — ${Math.round(ageSeconds)} s ago`
     : 'No snapshot collected yet.';
 
-  const eventRows = (events ?? []).map((e) => [
-    escape(e.at),
-    escape(EVENT_LABELS[e.type] ?? e.type),
-    escape(e.subject),
-    escape(JSON.stringify(e.detail)),
-  ]);
+  const eventRows = (events ?? []).map((e) => ({
+    className: e.severity === 'informational' ? '' : `sev-${e.severity ?? 'notable'}`,
+    cells: [
+      escape(e.at),
+      `${SEVERITY_MARKER[e.severity] ?? '!'} ${escape(EVENT_LABELS[e.type] ?? e.type)}`.trim(),
+      escape(e.subject),
+      escape(JSON.stringify(e.detail)),
+    ],
+  }));
 
   const body = snapshot
     ? [
@@ -137,6 +149,8 @@ function renderPage({ snapshot, events, ageSeconds, roleHint }) {
   .empty, .note { color:var(--dim); font-size:13px; }
   pre { background:#0b1220; padding:12px; border-radius:8px; overflow-x:auto; font-size:12px; }
   button { background:var(--line); color:var(--fg); border:0; border-radius:8px; padding:8px 14px; font-size:14px; cursor:pointer; }
+  tr.sev-critical td { color:var(--bad); }
+  tr.sev-notable td { color:var(--warn); }
 </style></head>
 <body><main>
   <h1>Azure Sandbox Manager</h1>
