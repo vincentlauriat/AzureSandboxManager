@@ -127,3 +127,44 @@ test('a probe status change is reported', () => {
   assert.equal(event.type, 'probe_status_changed');
   assert.deepEqual(event.detail, { from: 200, to: 503 });
 });
+
+// --- Batch 0: the vocabulary guard -------------------------------------------------
+
+const { EVENT_TYPES } = require('../src/vocabulary');
+
+test('every type the diff engine emits is in the vocabulary', () => {
+  // diffSnapshots routes every emission through the vocabulary guard, so this
+  // asserts the wiring rather than re-listing the table.
+  const denied = { status: 'denied', message: 'Authorization failed' };
+  const lock = { name: 'keep-it', level: 'CanNotDelete' };
+  const locked = ok({ roleAssignments: [], locks: [lock], denyAssignments: [], effectivePermissions: [] });
+
+  const pairs = [
+    [snapshot(), snapshot({ governance: denied })],
+    [snapshot({ governance: denied }), snapshot()],
+    [snapshot(), snapshot({ governance: locked })],
+    [snapshot({ governance: locked }), snapshot()],
+  ];
+
+  const emitted = new Set();
+  for (const [before, after] of pairs) {
+    for (const e of diffSnapshots(before, after)) emitted.add(e.type);
+  }
+
+  assert.deepEqual(
+    [...emitted].sort(),
+    ['collector_access_lost', 'collector_access_restored', 'lock_added', 'lock_removed']
+  );
+  for (const type of emitted) assert.ok(EVENT_TYPES.includes(type), type);
+});
+
+test('a collector transition keeps its exact shape', () => {
+  // The clients decode these four keys; the guard must not reshape them.
+  const denied = { status: 'denied', message: 'Authorization failed' };
+  const [event] = diffSnapshots(snapshot(), snapshot({ governance: denied }));
+  assert.deepEqual(Object.keys(event).sort(), ['collector', 'detail', 'subject', 'type']);
+  assert.equal(event.type, 'collector_access_lost');
+  assert.equal(event.subject, 'governance');
+  assert.equal(event.collector, 'governance');
+  assert.deepEqual(event.detail, { status: 'denied', message: 'Authorization failed' });
+});
