@@ -67,6 +67,25 @@ something compares them against the subscription its own `az` is pointed at, and
 differ. Every other key of `snapshot` **is** a collector section, shaped
 `{ status, data, message, durationMs }` with `status` one of `ok`, `denied`, `error`.
 
+#### Section payloads
+
+Every key of `snapshot` except `identity` is a collector section shaped
+`{ status, data, message, durationMs }`. What `data` contains when `status` is `ok`:
+
+| Section | `data` |
+|---|---|
+| `resources` | list of `{ name, type, location, tags }` |
+| `plans` | list of `{ name, tier, size, sites, status, location }` — the app count is **`sites`** |
+| `apps` | list of `{ name, state, plan, runtime, httpsOnly, alwaysOn, url, location }` |
+| `budget` | **a list**, not one object: `{ name, amount, currency, spent, percent, timeGrain, thresholds }` — a resource group may carry several budgets |
+| `governance` | `{ roleAssignments, locks, denyAssignments, effectivePermissions, unavailable }`; an assignment is `{ id, principalId, principalType, roleDefinitionId, scope }` — the role **id**, never its display name, which would need directory access this identity does not have |
+| `probes` | list of `{ app, url, httpStatus, latencyMs, error }` — the key is `app`, and a probe that did not answer has `httpStatus: null` with `error` set |
+
+These are written down because they were not, and a client modelled them from the surrounding prose
+instead: `budget` as one object, a probe's key as `name`, a plan's count as `appCount`. Its own test
+fixtures were composed from the same prose, so they agreed with the model and with nothing served
+here. A payload that is not specified will be invented.
+
 ### `GET /api/v1/apps`
 
 Applications and probe results only. Useful for a client that polls often and does not need the rest.
@@ -91,6 +110,10 @@ Applications and probe results only. Useful for a client that polls often and do
 
 Newest first. `?limit=` accepts 1–500 and defaults to 50; out-of-range values are clamped, not
 rejected.
+
+`detail` is free-form and its values are **not all strings**: a probe transition sends
+`{"from": 200, "to": null}`, an assignment sends `{"role": "b24988ac", "scope": "/…"}`. A client must
+accept a string, a number, a boolean or null.
 
 `severity` is one of `informational`, `notable`, `critical`. It is a function of `type`, derived when
 the event is read and **never stored** in the change log — so re-classifying a type later
