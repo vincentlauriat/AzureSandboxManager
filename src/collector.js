@@ -34,7 +34,14 @@ async function collect(arm, config, { now = () => Date.now(), clock = () => new 
   return {
     collectedAt: clock().toISOString(),
     durationMs: now() - startedAt,
-    identity: { available: arm.available },
+    // Not a collector section: this is configuration, and it can never be denied.
+    // A client guarding a write action compares `subscriptionId` against the one
+    // `az` is pointed at, so the snapshot has to name the scope it describes.
+    identity: {
+      available: arm.available,
+      subscriptionId: config.subscriptionId,
+      resourceGroup: config.resourceGroup,
+    },
     resources,
     plans,
     apps,

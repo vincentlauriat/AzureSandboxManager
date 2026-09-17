@@ -48,3 +48,36 @@ test('one collector failing does not affect another', async () => {
   assert.equal(good.status, 'ok');
   assert.equal(good.data, 'still here');
 });
+
+// --- The snapshot must name the scope it describes ---------------------------------
+
+const { collect } = require('../src/collector');
+
+test('the snapshot names the subscription and resource group it describes', async () => {
+  // A client guarding a write action needs to prove the snapshot it is acting on
+  // describes the subscription `az` is pointed at. The server knows both from its
+  // own configuration, so it publishes them rather than letting clients guess.
+  const arm = { available: true };
+  const config = { subscriptionId: 'sub-42', resourceGroup: 'rg-sandbox', selfSiteName: 'mgr' };
+
+  const snapshot = await collect(arm, config);
+
+  assert.deepEqual(snapshot.identity, {
+    available: true,
+    subscriptionId: 'sub-42',
+    resourceGroup: 'rg-sandbox',
+  });
+});
+
+test('identity is published even when every collector fails', async () => {
+  // Knowing which subscription a snapshot describes must not depend on ARM
+  // being reachable — it is configuration, not a collection.
+  const arm = { available: false };
+  const config = { subscriptionId: 'sub-42', resourceGroup: 'rg-sandbox', selfSiteName: 'mgr' };
+
+  const snapshot = await collect(arm, config);
+
+  assert.equal(snapshot.identity.subscriptionId, 'sub-42');
+  assert.equal(snapshot.identity.available, false);
+  assert.notEqual(snapshot.resources.status, 'ok');
+});

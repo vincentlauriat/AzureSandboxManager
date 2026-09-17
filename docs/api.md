@@ -50,6 +50,23 @@ The complete snapshot: `identity`, `resources`, `plans`, `apps`, `budget`, `gove
 - `401` — missing or invalid token
 - `503` — no collection has completed yet
 
+`identity` is **not a collector section**. It is configuration, it can never be denied, and it
+therefore has no `status` / `data` / `durationMs` wrapper:
+
+```json
+"identity": {
+  "available": true,
+  "subscriptionId": "3e0041cf-...",
+  "resourceGroup": "rg-dev-vincent-sandbox"
+}
+```
+
+`available` says whether the managed identity could obtain a token. `subscriptionId` and
+`resourceGroup` name the scope this snapshot describes — a client about to start, stop or restart
+something compares them against the subscription its own `az` is pointed at, and refuses when they
+differ. Every other key of `snapshot` **is** a collector section, shaped
+`{ status, data, message, durationMs }` with `status` one of `ok`, `denied`, `error`.
+
 ### `GET /api/v1/apps`
 
 Applications and probe results only. Useful for a client that polls often and does not need the rest.
